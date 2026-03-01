@@ -434,8 +434,8 @@ func (s *IptablesService) createMoveRuleService() error {
 	return nil
 }
 
-// saveWithNetfilterPersistent saves using netfilter-persistent
-func (s *IptablesService) saveWithNetfilterPersistent() error {
+// saveRulesToDisk exports current iptables/ip6tables rules to files.
+func (s *IptablesService) saveRulesToDisk() error {
 	// Создаем директорию если не существует
 	if err := os.MkdirAll("/etc/iptables", 0755); err != nil {
 		return fmt.Errorf("failed to create /etc/iptables: %w", err)
@@ -450,6 +450,15 @@ func (s *IptablesService) saveWithNetfilterPersistent() error {
 		return fmt.Errorf("failed to save ip6tables: %w", err)
 	}
 	s.logger.Info().Msg("Правила IPv6 сохранены в /etc/iptables/rules.v6")
+
+	return nil
+}
+
+// saveWithNetfilterPersistent saves using netfilter-persistent
+func (s *IptablesService) saveWithNetfilterPersistent() error {
+	if err := s.saveRulesToDisk(); err != nil {
+		return err
+	}
 
 	// Применяем через netfilter-persistent
 	if err := s.cmdSvc.Run("netfilter-persistent", "save"); err != nil {
